@@ -1,0 +1,3 @@
+export const HTTP_UNEXPECTED_ERROR = 500
+export const HTTP_INVALID_CREDENTIAL_ERROR = 401
+export const HTTP_OK = 200
