@@ -1,13 +1,31 @@
 /* eslint-disable jest/expect-expect */
 import React from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react'
+import handlers, { handlerInvalidCredentials } from '../../../mocks/handlers'
+import { setupServer } from 'msw/node'
+import { rest } from 'msw'
 import LoginPage from './login-page'
+import { HTTP_UNEXPECTED_ERROR } from '../../../constants/statusHttp'
 
 const messagePasswordValidation = 'The password must contain at least 8 characters, one upper case letter, one number and one special character'
 
 const getPasswordInput = () => (screen.getByLabelText(/password/i))
 
-beforeEach(() => render(<LoginPage/>))
+const getSendButton = () => (screen.getByRole('button', { name: /send/i }))
+
+const fillsInput = ({ email = 'john.doe@test.com', password = 'xss1aAR#' } = {}) => {
+  fireEvent.change(screen.getByLabelText(/email/i), { target: { value: email } })
+  fireEvent.change(screen.getByLabelText(/password/i), { target: { value: password } })
+}
+const server = setupServer(...handlers)
+
+beforeEach(() => render(<LoginPage />))
+
+beforeAll(() => server.listen())
+
+afterEach(() => server.resetHandlers())
+
+afterAll(() => server.close())
 
 describe('when login page is mount', () => {
   it('must display the login title', () => {
@@ -35,8 +53,7 @@ describe('when the user leaves empty fields and clicks the submit button', () =>
 })
 describe('when the user fills empty fields and clicks the submit button', () => {
   it('must not display the required message', () => {
-    screen.getByLabelText(/email/i).value = 'john.doe@test.com'
-    screen.getByLabelText(/password/i).value = 'aAa123!0%'
+    fillsInput()
     fireEvent.click(screen.getByRole('button', { name: /send/i }))
 
     expect(screen.queryByText(/the email is required/i)).not.toBeInTheDocument()
@@ -82,7 +99,7 @@ describe('when the user fills and blur the password input with a value with 7 ch
     expect(screen.getByText(messagePasswordValidation)).toBeInTheDocument()
   })
 })
-describe('When the users fills and blur the password input with a value without one upper case letter', () => {
+describe('when the users fills and blur the password input with a value without one upper case letter', () => {
   it(`must display the validation message "the password must contain at least 8 charaters, 
   one upper case lter, one number, and one special character`, () => {
     const passwordWithoutNumber = 'aiulaxzA'
@@ -92,7 +109,7 @@ describe('When the users fills and blur the password input with a value without 
     expect(screen.getByText(messagePasswordValidation)).toBeInTheDocument()
   })
 })
-describe('When the users fills and blur the password input with a value without one number', () => {
+describe('when the users fills and blur the password input with a value without one number', () => {
   it(`must display the validation message "The password must contain at least 8 characters,
     one upper case letter, one number and one special character"`, () => {
     const passwordWithoutSpecialChar = 'asdfghjA1a'
@@ -120,5 +137,46 @@ describe('when the user filss and blur the password input with a invalid value a
     })
     fireEvent.blur(getPasswordInput())
     expect(screen.queryByText(messagePasswordValidation)).not.toBeInTheDocument()
+  })
+})
+describe('when the user submit the login form with valid data', () => {
+  it('must disable the submit button while the form page is fetching the data', async () => {
+    fillsInput()
+    fireEvent.click(getSendButton())
+    expect(getSendButton()).toBeDisabled()
+
+    await waitFor(() => expect(getSendButton()).not.toBeDisabled())
+  })
+  it('must be a loading indicator at thetop tof the form while it is fetching', async () => {
+    fillsInput()
+    expect(screen.queryByTestId('loading-indicator')).not.toBeInTheDocument()
+    fireEvent.click(getSendButton())
+    expect(screen.getByTestId('loading-indicator')).toBeInTheDocument()
+
+    await waitForElementToBeRemoved(() => screen.getByTestId('loading-indicator'))
+  })
+})
+describe('when the user submit the login form with valid data and there is an unexpected server error', () => {
+  it('must display the error message "Unexpected error, please try again" from the api', async () => {
+    expect(await screen.queryByText(/Unexpected error, please try again/i)).not.toBeInTheDocument()
+    // setup server - config
+    server.use(rest.post('/login', (req, res, ctx) => res(ctx.status(HTTP_UNEXPECTED_ERROR), ctx.json({ message: 'Unexpected error, please try again' }))))
+    fillsInput()
+    fireEvent.click(getSendButton())
+    expect(await screen.findByText(/Unexpected error, please try again/i)).toBeInTheDocument()
+  })
+})
+
+describe('when the user submit the login form with valid data and there is an invalid credentials error', () => {
+  it('must display the error message "The email or password are not correct" from the api', async () => {
+    const wrongEmail = 'wrong@mail.com'
+    const wrongPassword = 'asd321!A'
+
+    server.use(handlerInvalidCredentials({ wrongEmail, wrongPassword }))
+    expect(screen.queryByText(/The email or password are not correct/i)).not.toBeInTheDocument()
+    fillsInput({ email: wrongEmail, password: wrongPassword })
+
+    fireEvent.click(getSendButton())
+    expect(await screen.findByText(/The email or password are not correct/i)).toBeInTheDocument()
   })
 })
