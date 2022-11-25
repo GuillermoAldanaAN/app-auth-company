@@ -1,10 +1,16 @@
 import React from 'react'
-import LoginPage from './components/auth/login-page'
+import {
+  BrowserRouter as Router
+} from 'react-router-dom'
 import './App.css'
+import AppRouter from './routers/app-router'
 
 function App () {
   return (
-    <LoginPage />
+    <Router >
+      <AppRouter></AppRouter>
+    </Router>
+
   )
 }
 
