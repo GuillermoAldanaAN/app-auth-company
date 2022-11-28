@@ -1,13 +1,20 @@
 import { rest } from 'msw'
+import { ADMIN_ROLE } from '../constants/roles'
 import { HTTP_INVALID_CREDENTIAL_ERROR, HTTP_OK } from '../constants/statusHttp'
 
 export const handlers = [
   // Handles a POST /login request
   rest.post('/login', (req, res, ctx) => {
     sessionStorage.setItem('is-authenticated', 'true')
+    // ctx.json is the api response
+    let role = ''
+
+    const { email } = req.body
+    if (email === 'admin@mail.com') {
+      role = ADMIN_ROLE
+    }
     return res(
-      ctx.status(200)
-    )
+      ctx.status(200), ctx.json({ user: { role } }))
   })
 ]
 export const handlerInvalidCredentials = ({ wrongPassword, wrongEmail }) =>
