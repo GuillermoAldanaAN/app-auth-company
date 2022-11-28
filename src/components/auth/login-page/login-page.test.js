@@ -15,7 +15,7 @@ const getPasswordInput = () => (screen.getByLabelText(/password/i))
 const server = setupServer(...handlers)
 
 beforeEach(() => renderWithRouter(
-  <AuthContext.Provider value={{ handleSuccess: jest.fn() }}>
+  <AuthContext.Provider value={{ handleSuccess: jest.fn(), user: { role: '' } }}>
     <LoginPage />
   </AuthContext.Provider>)
 )

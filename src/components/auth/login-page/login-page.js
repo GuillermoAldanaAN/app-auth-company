@@ -18,12 +18,11 @@ const validatePassword = password => {
   return passwordRulesRegex.test(password)
 }
 const Login = () => {
-  const { handleSuccess } = useContext(AuthContext)
+  const { handleSuccess, user } = useContext(AuthContext)
   const [isOpen, setIsOpen] = useState(false)
   const [emailValidation, setEmailValidation] = useState('')
   const [passwordValidation, setPasswordValidation] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-  const [user, setUser] = useState({ role: '' })
   const [formValues, setFormValues] = useState({
     email: '',
     password: ''
@@ -49,10 +48,9 @@ const Login = () => {
       const response = await login({ email, password })
       if (!response.ok) { throw response }
       const {
-        user: { role }
+        user: { role, username }
       } = await response.json()
-      setUser({ role })
-      handleSuccess(true)
+      handleSuccess({ role, username })
     } catch (error) {
       const data = await error.json()
       setErrorMessage(data.message)
