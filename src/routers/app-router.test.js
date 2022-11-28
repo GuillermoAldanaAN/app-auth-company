@@ -42,5 +42,6 @@ describe('when the admin is authenticated in login page', () => {
     fillsInput({ email: 'admin@mail.com' })
     fireEvent.click(getSendButton())
     expect(await screen.findByText(/admin page/i)).toBeInTheDocument()
+    expect(await screen.findByText(/john doe/i)).toBeInTheDocument()
   })
 })
