@@ -1,25 +1,24 @@
 /* eslint-disable jest/expect-expect */
 import React from 'react'
-import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react'
+import { fireEvent, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react'
 import handlers, { handlerInvalidCredentials } from '../../../mocks/handlers'
 import { setupServer } from 'msw/node'
 import { rest } from 'msw'
 import LoginPage from './login-page'
 import { HTTP_UNEXPECTED_ERROR } from '../../../constants/statusHttp'
-
+import { renderWithRouter, fillsInput, getSendButton } from '../../../utils/tests'
+import { AuthContext } from '../../../contexts/auth-context'
 const messagePasswordValidation = 'The password must contain at least 8 characters, one upper case letter, one number and one special character'
 
 const getPasswordInput = () => (screen.getByLabelText(/password/i))
 
-const getSendButton = () => (screen.getByRole('button', { name: /send/i }))
-
-const fillsInput = ({ email = 'john.doe@test.com', password = 'xss1aAR#' } = {}) => {
-  fireEvent.change(screen.getByLabelText(/email/i), { target: { value: email } })
-  fireEvent.change(screen.getByLabelText(/password/i), { target: { value: password } })
-}
 const server = setupServer(...handlers)
 
-beforeEach(() => render(<LoginPage />))
+beforeEach(() => renderWithRouter(
+  <AuthContext.Provider value={{ handleSuccess: jest.fn() }}>
+    <LoginPage />
+  </AuthContext.Provider>)
+)
 
 beforeAll(() => server.listen())
 

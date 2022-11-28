@@ -1,35 +1,31 @@
 import React from 'react'
 import {
+  BrowserRouter as Router,
   Switch,
   Route
 } from 'react-router-dom'
-import PropTypes from 'prop-types'
+
 import LoginPage from '../components/auth/login-page'
 import { PrivateRoute } from '../utils/components/private-route'
 import AdminPage from '../components/admin'
 import EmployeePage from '../components/employee'
 
-const AppRouter = ({ isAuth }) => {
+const AppRouter = () => {
   return (
-    <React.Fragment>
+    <Router>
       <Switch>
         <Route path="/" exact>
           <LoginPage />
         </Route>
-        <PrivateRoute path="/admin" isAuth={isAuth}>
+        <PrivateRoute path="/admin" >
           <AdminPage />
         </PrivateRoute>
-        <PrivateRoute path="/employee" isAuth={isAuth}>
+        <PrivateRoute path="/employee">
           <EmployeePage />
         </PrivateRoute>
       </Switch>
-    </React.Fragment>
+    </Router>
   )
 }
-AppRouter.propTypes = {
-  isAuth: PropTypes.bool.isRequired
-}
-AppRouter.defaultProps = {
-  isAuth: false
-}
+
 export default AppRouter

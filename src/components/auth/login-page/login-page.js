@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import TextField from '@mui/material/TextField'
 import { Avatar, Box, Button, CircularProgress, Container, Snackbar, Typography } from '@mui/material'
 import { login } from '../../../services'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-
+import { Redirect } from 'react-router-dom'
+import { ADMIN_ROLE } from '../../../constants/roles'
+import { AuthContext } from '../../../contexts/auth-context'
 const passwordMessage = 'The password must contain at least 8 characters, one upper case letter, one number and one special character'
 const validateEmail = (email) => {
   const regex = /^[-\w.%+]{1,64}@(?:[A-Z0-9-]{1,63}\.){1,125}[A-Z]{2,63}$/i
@@ -16,11 +18,12 @@ const validatePassword = password => {
   return passwordRulesRegex.test(password)
 }
 const Login = () => {
+  const { handleSuccess } = useContext(AuthContext)
   const [isOpen, setIsOpen] = useState(false)
   const [emailValidation, setEmailValidation] = useState('')
   const [passwordValidation, setPasswordValidation] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-
+  const [user, setUser] = useState({ role: '' })
   const [formValues, setFormValues] = useState({
     email: '',
     password: ''
@@ -45,6 +48,11 @@ const Login = () => {
       setIsFetching(true)
       const response = await login({ email, password })
       if (!response.ok) { throw response }
+      const {
+        user: { role }
+      } = await response.json()
+      setUser({ role })
+      handleSuccess(true)
     } catch (error) {
       const data = await error.json()
       setErrorMessage(data.message)
@@ -73,6 +81,10 @@ const Login = () => {
     }
   }
   const handleClose = () => setIsOpen(false)
+
+  if (!isFetching && user.role === ADMIN_ROLE) {
+    return <Redirect to={'/admin'}/>
+  }
   return (
     <Container component={'main'} maxWidth='xs'>
       <Box
