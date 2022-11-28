@@ -14,7 +14,7 @@ export const handlers = [
       role = ADMIN_ROLE
     }
     return res(
-      ctx.status(200), ctx.json({ user: { role } }))
+      ctx.status(200), ctx.json({ user: { role, username: 'John Doe' } }))
   })
 ]
 export const handlerInvalidCredentials = ({ wrongPassword, wrongEmail }) =>

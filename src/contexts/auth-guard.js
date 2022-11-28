@@ -4,9 +4,15 @@ import { AuthContext } from './auth-context'
 
 const AuthGuard = ({ children, isAuth }) => {
   const [isUserAuth, setIsUserAuth] = useState(isAuth)
-  const handleSuccess = () => setIsUserAuth(true)
+  const [user, setUser] = useState({ role: '', username: '' })
+  const handleSuccess = ({ role, username }) => {
+    setUser({ role, username })
+    setIsUserAuth(true)
+  }
   const authProviderValue = {
     isAuth: isUserAuth,
+    user,
+    setUser,
     handleSuccess
   }
   return (
